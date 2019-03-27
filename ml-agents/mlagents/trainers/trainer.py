@@ -14,6 +14,7 @@ class UnityTrainerException(UnityException):
     """
     Related to errors with the Trainer.
     """
+
     pass
 
 
@@ -38,14 +39,15 @@ class Trainer(object):
         self.policy = None
 
     def __str__(self):
-        return '''{} Trainer'''.format(self.__class__)
+        return """{} Trainer""".format(self.__class__)
 
     def check_param_keys(self):
         for k in self.param_keys:
             if k not in self.trainer_parameters:
                 raise UnityTrainerException(
                     "The hyper-parameter {0} could not be found for the {1} trainer of "
-                    "brain {2}.".format(k, self.__class__, self.brain_name))
+                    "brain {2}.".format(k, self.__class__, self.brain_name)
+                )
 
     @property
     def parameters(self):
@@ -90,7 +92,8 @@ class Trainer(object):
         Increment the step count of the trainer and updates the last reward
         """
         raise UnityTrainerException(
-            "The increment_step_and_update_last_reward method was not implemented.")
+            "The increment_step_and_update_last_reward method was not implemented."
+        )
 
     def get_action(self, curr_info: BrainInfo) -> ActionInfo:
         """
@@ -100,8 +103,9 @@ class Trainer(object):
         """
         return self.policy.get_action(curr_info)
 
-    def add_experiences(self, curr_info: AllBrainInfo, next_info: AllBrainInfo,
-                        take_action_outputs):
+    def add_experiences(
+        self, curr_info: AllBrainInfo, next_info: AllBrainInfo, take_action_outputs
+    ):
         """
         Adds experiences to each agent's experience history.
         :param curr_info: Current AllBrainInfo.
@@ -117,7 +121,9 @@ class Trainer(object):
         :param current_info: Dictionary of all current-step brains and corresponding BrainInfo.
         :param next_info: Dictionary of all next-step brains and corresponding BrainInfo.
         """
-        raise UnityTrainerException("The process_experiences method was not implemented.")
+        raise UnityTrainerException(
+            "The process_experiences method was not implemented."
+        )
 
     def end_episode(self):
         """
@@ -157,25 +163,40 @@ class Trainer(object):
         :param lesson_num: Current lesson number in curriculum.
         :param global_step: The number of steps the simulation has been going for
         """
-        if global_step % self.trainer_parameters['summary_freq'] == 0 and global_step != 0:
-            is_training = "Training." if self.is_training and self.get_step <= self.get_max_steps else "Not Training."
-            if len(self.stats['Environment/Cumulative Reward']) > 0:
-                mean_reward = np.mean(self.stats['Environment/Cumulative Reward'])
-                logger.info(" {}: {}: Step: {}. Mean Reward: {:0.3f}. Std of Reward: {:0.3f}. {}"
-                            .format(self.run_id, self.brain_name,
-                                    min(self.get_step, self.get_max_steps),
-                                    mean_reward, np.std(self.stats['Environment/Cumulative Reward']),
-                                    is_training))
+        if (
+            global_step % self.trainer_parameters["summary_freq"] == 0
+            and global_step != 0
+        ):
+            is_training = (
+                "Training."
+                if self.is_training and self.get_step <= self.get_max_steps
+                else "Not Training."
+            )
+            if len(self.stats["Environment/Cumulative Reward"]) > 0:
+                mean_reward = np.mean(self.stats["Environment/Cumulative Reward"])
+                logger.info(
+                    " {}: {}: Step: {}. Mean Reward: {:0.3f}. Std of Reward: {:0.3f}. {}".format(
+                        self.run_id,
+                        self.brain_name,
+                        min(self.get_step, self.get_max_steps),
+                        mean_reward,
+                        np.std(self.stats["Environment/Cumulative Reward"]),
+                        is_training,
+                    )
+                )
             else:
-                logger.info(" {}: {}: Step: {}. No episode was completed since last summary. {}"
-                            .format(self.run_id, self.brain_name, self.get_step, is_training))
+                logger.info(
+                    " {}: {}: Step: {}. No episode was completed since last summary. {}".format(
+                        self.run_id, self.brain_name, self.get_step, is_training
+                    )
+                )
             summary = tf.Summary()
             for key in self.stats:
                 if len(self.stats[key]) > 0:
                     stat_mean = float(np.mean(self.stats[key]))
-                    summary.value.add(tag='{}'.format(key), simple_value=stat_mean)
+                    summary.value.add(tag="{}".format(key), simple_value=stat_mean)
                     self.stats[key] = []
-            summary.value.add(tag='Environment/Lesson', simple_value=lesson_num)
+            summary.value.add(tag="Environment/Lesson", simple_value=lesson_num)
             self.summary_writer.add_summary(summary, self.get_step)
             self.summary_writer.flush()
 
@@ -188,11 +209,16 @@ class Trainer(object):
         """
         try:
             with tf.Session() as sess:
-                s_op = tf.summary.text(key, tf.convert_to_tensor(
-                    ([[str(x), str(input_dict[x])] for x in input_dict])))
+                s_op = tf.summary.text(
+                    key,
+                    tf.convert_to_tensor(
+                        ([[str(x), str(input_dict[x])] for x in input_dict])
+                    ),
+                )
                 s = sess.run(s_op)
                 self.summary_writer.add_summary(s, self.get_step)
         except:
             logger.info(
-                "Cannot write text summary for Tensorboard. Tensorflow version must be r1.2 or above.")
+                "Cannot write text summary for Tensorboard. Tensorflow version must be r1.2 or above."
+            )
             pass
